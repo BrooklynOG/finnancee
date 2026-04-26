@@ -1,31 +1,34 @@
-// Replace the fetch call section (around line 20-50) with:
+const express = require('express');
+const path = require('path');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
 
+// API endpoint for chat (mock response for now - will work without API key)
 app.post('/api/chat', async (req, res) => {
     const { messages } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const userMessage = messages[messages.length - 1]?.content || '';
     
-    if (!apiKey) {
-        return res.status(500).json({ error: 'API key not configured' });
-    }
+    // Simple mock response if no API key
+    let reply = `I'm your finance assistant! Here's what I know about "${userMessage}":\n\n`;
+    reply += `For personal finance in India, consider these basics:\n`;
+    reply += `• Save 20% of your income\n`;
+    reply += `• Build an emergency fund (6 months expenses)\n`;
+    reply += `• Invest in PPF, mutual funds, or FD\n`;
+    reply += `• Use the 50-30-20 budget rule\n\n`;
+    reply += `⚠️ For specific advice, please add your API key to enable AI responses.`;
     
-    try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-        
-        // Get the last user message
-        const userMessage = messages[messages.length - 1].content;
-        
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-        });
-        
-        const reply = result.response.text();
-        res.json({ reply: reply });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: error.message });
-    }
+    res.json({ reply: reply });
+});
+
+// Serve the main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
