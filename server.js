@@ -28,9 +28,8 @@ app.post('/api/chat', async (req, res) => {
     }
     
     try {
-        // ✅ CORRECT MODEL NAME for 2026 - Using gemini-2.5-flash-latest
-        // This is the stable, working model as of 2026 [citation:8][citation:9]
-        const modelName = 'gemini-2.5-flash-latest';
+        // ✅ CORRECT MODEL NAME from your list - using gemini-2.5-flash
+        const modelName = 'gemini-2.5-flash';
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
             method: 'POST',
@@ -43,7 +42,9 @@ app.post('/api/chat', async (req, res) => {
                 }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 800
+                    maxOutputTokens: 800,
+                    topP: 0.95,
+                    topK: 40
                 }
             })
         });
@@ -61,7 +62,7 @@ app.post('/api/chat', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.json({ 
-            reply: `⚠️ Sorry, I'm having trouble connecting to AI. Please try again in a moment.\n\nError details: ${error.message}`
+            reply: `⚠️ Sorry, I'm having trouble connecting to AI. Please try again in a moment.\n\nError: ${error.message}`
         });
     }
 });
