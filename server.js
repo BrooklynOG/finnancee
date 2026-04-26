@@ -7,21 +7,61 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-// API endpoint for chat (mock response for now - will work without API key)
+// API endpoint for chat with Gemini AI
 app.post('/api/chat', async (req, res) => {
     const { messages } = req.body;
     const userMessage = messages[messages.length - 1]?.content || '';
+    const apiKey = process.env.GEMINI_API_KEY;
     
-    // Simple mock response if no API key
-    let reply = `I'm your finance assistant! Here's what I know about "${userMessage}":\n\n`;
-    reply += `For personal finance in India, consider these basics:\n`;
-    reply += `• Save 20% of your income\n`;
-    reply += `• Build an emergency fund (6 months expenses)\n`;
-    reply += `• Invest in PPF, mutual funds, or FD\n`;
-    reply += `• Use the 50-30-20 budget rule\n\n`;
-    reply += `⚠️ For specific advice, please add your API key to enable AI responses.`;
+    console.log('Received message:', userMessage);
+    console.log('API Key exists:', !!apiKey);
     
-    res.json({ reply: reply });
+    // If no API key, give basic response
+    if (!apiKey) {
+        let reply = `💡 I'm your finance assistant!\n\n`;
+        reply += `📊 Personal Finance Tips for India:\n`;
+        reply += `• Save 20% of your income\n`;
+        reply += `• Build emergency fund (6 months expenses)\n`;
+        reply += `• Invest in PPF, Mutual Funds, or FD\n`;
+        reply += `• Follow the 50-30-20 budget rule\n\n`;
+        reply += `🔑 Add your Gemini API key in Render environment variables for AI-powered responses!`;
+        return res.json({ reply: reply });
+    }
+    
+    try {
+        // Call Gemini API
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `You are a friendly personal finance expert specialized in Indian finance. Answer this question helpfully, concisely, and use ₹ currency when relevant. Keep responses under 500 words: ${userMessage}`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 800
+                }
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Gemini API Error:', data.error);
+            throw new Error(data.error.message);
+        }
+        
+        const reply = data.candidates[0].content.parts[0].text;
+        res.json({ reply: reply });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        res.json({ 
+            reply: `⚠️ Sorry, I'm having trouble connecting to AI. Please try again in a moment. Error: ${error.message}`
+        });
+    }
 });
 
 // Serve the main page
@@ -30,5 +70,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`✅ Server running on port ${PORT}`);
 });
