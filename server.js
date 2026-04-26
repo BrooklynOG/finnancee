@@ -29,19 +29,22 @@ app.post('/api/chat', async (req, res) => {
     }
     
     try {
-        // Call Gemini API
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+        // CORRECT MODEL NAME - Using Gemini 1.5 Flash (stable and free)
+        const modelName = 'gemini-1.5-flash';
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: `You are a friendly personal finance expert specialized in Indian finance. Answer this question helpfully, concisely, and use ₹ currency when relevant. Keep responses under 500 words: ${userMessage}`
+                        text: `You are a friendly personal finance expert specialized in Indian finance. Answer this question helpfully, concisely, and use ₹ currency when relevant. Keep responses clear and practical: ${userMessage}`
                     }]
                 }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 800
+                    maxOutputTokens: 800,
+                    topP: 0.95
                 }
             })
         });
@@ -50,6 +53,12 @@ app.post('/api/chat', async (req, res) => {
         
         if (data.error) {
             console.error('Gemini API Error:', data.error);
+            // Try alternative model if first fails
+            if (data.error.message.includes('not found')) {
+                const altResponse = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
+                const models = await altResponse.json();
+                console.log('Available models:', models);
+            }
             throw new Error(data.error.message);
         }
         
@@ -59,7 +68,7 @@ app.post('/api/chat', async (req, res) => {
     } catch (error) {
         console.error('Error:', error);
         res.json({ 
-            reply: `⚠️ Sorry, I'm having trouble connecting to AI. Please try again in a moment. Error: ${error.message}`
+            reply: `⚠️ Sorry, I'm having trouble connecting to AI. Please try again in a moment.\n\nError details: ${error.message}\n\n💡 Tip: Make sure your Gemini API key is correct and has Generative Language API enabled.`
         });
     }
 });
