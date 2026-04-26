@@ -28,7 +28,6 @@ app.post('/api/chat', async (req, res) => {
     }
     
     try {
-        // ✅ CORRECT MODEL NAME from your list - using gemini-2.5-flash
         const modelName = 'gemini-2.5-flash';
         
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
@@ -42,7 +41,7 @@ app.post('/api/chat', async (req, res) => {
                 }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 800,
+                    maxOutputTokens: 2048,  // ✅ INCREASED from 800 to 2048 (allows longer responses)
                     topP: 0.95,
                     topK: 40
                 }
