@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Finance AI Helper</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0e1117;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 3rem;
+      color: #e8e6df;
+    }
+
+    #app { width: 100%; max-width: 700px; }
+
+    #header { text-align: center; padding: 2rem 0 1.5rem; }
+    #header .badge {
+      display: inline-block;
+      background: rgba(29,158,117,0.15);
+      color: #4ecfa0;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(78,207,160,0.25);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+    #header h1 {
+      font-family: 'Lora', serif;
+      font-size: 30px;
+      font-weight: 400;
+      color: #f0ede6;
+      line-height: 1.2;
+    }
+    #header p { font-size: 13px; color: #8a877e; margin-top: 6px; font-weight: 300; }
+
+    #chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      padding: 0 0 1.25rem;
+    }
+    .chip {
+      background: rgba(255,255,255,0.05);
+      color: #c4c1b8;
+      font-size: 12px;
+      font-weight: 400;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .chip:hover {
+      background: rgba(78,207,160,0.12);
+      color: #4ecfa0;
+      border-color: rgba(78,207,160,0.3);
+    }
+
+    #chat {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      background: #161b24;
+      overflow: hidden;
+    }
+
+    #msgs {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 320px;
+      max-height: 420px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    #msgs::-webkit-scrollbar { width: 4px; }
+    #msgs::-webkit-scrollbar-track { background: transparent; }
+    #msgs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .msg-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .msg-wrap.user { align-items: flex-end; }
+    .msg-wrap.bot { align-items: flex-start; }
+
+    .msg-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 0 4px;
+    }
+    .bot .msg-label { color: #4ecfa0; }
+    .user .msg-label { color: #8a877e; }
+
+    .msg {
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.65;
+      padding: 11px 15px;
+      border-radius: 14px;
+    }
+    .bot .msg {
+      background: rgba(255,255,255,0.06);
+      color: #dedad2;
+      border-bottom-left-radius: 4px;
+    }
+    .user .msg {
+      background: #1D9E75;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg strong { font-weight: 500; color: #f0ede6; }
+    .bot .msg strong { color: #4ecfa0; }
+
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 15px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+    .typing span {
+      width: 7px; height: 7px;
+      background: #4ecfa0;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+      opacity: .6;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .disclaimer {
+      font-size: 11px;
+      color: #5a5750;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 14px;
+      background: rgba(0,0,0,0.15);
+    }
+
+    #inputrow {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    #inp {
+      flex: 1;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 9px;
+      background: rgba(255,255,255,0.05);
+      color: #e8e6df;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #inp::placeholder { color: #5a5750; }
+    #inp:focus { border-color: rgba(78,207,160,0.4); }
+    #send {
+      background: #1D9E75;
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity .15s;
+      white-space: nowrap;
+    }
+    #send:hover { opacity: .85; }
+    #send:disabled { opacity: .4; cursor: default; }
+
+    #calc-panel {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      background: #161b24;
+      margin: 1rem 0 0;
+      padding: 1.25rem;
+      display: none;
+    }
+    #calc-panel h3 {
+      font-size: 14px;
+      font-weight: 500;
+      color: #4ecfa0;
+      margin-bottom: 1rem;
+      letter-spacing: .02em;
+    }
+    .field { margin-bottom: 12px; }
+    .field label { font-size: 12px; color: #8a877e; display: block; margin-bottom: 5px; }
+    .field input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 11px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #e8e6df;
+      outline: none;
+    }
+    .field input:focus { border-color: rgba(78,207,160,0.4); }
+    #calc-btn {
+      background: #1D9E75;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+    }
+    #emi-result { margin-top: 12px; display: none; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat {
+      background: rgba(29,158,117,0.08);
+      border: 1px solid rgba(78,207,160,0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+    .stat-label { font-size: 10px; color: #8a877e; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-val { font-size: 16px; font-weight: 500; color: #4ecfa0; }
+
+    .status-info {
+      margin-top: 1rem;
+      background: rgba(78,207,160,0.1);
+      border: 1px solid rgba(78,207,160,0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #4ecfa0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div class="badge">AI-Powered</div>
+    <h1>Finance Helper</h1>
+    <p>Ask anything about personal finance in India</p>
+  </div>
+
+  <div id="chips">
+    <button class="chip" onclick="ask('What is compound interest and how does it work?')">Compound interest</button>
+    <button class="chip" onclick="ask('Give me 5 practical budget tips for saving money')">Budget tips</button>
+    <button class="chip" onclick="toggleCalc()">EMI calculator</button>
+    <button class="chip" onclick="ask('How much should I save each month from my salary?')">How much to save?</button>
+    <button class="chip" onclick="ask('Explain the 50-30-20 rule for budgeting')">50-30-20 rule</button>
+    <button class="chip" onclick="ask('What are the best investment options in India for beginners?')">Investment basics</button>
+  </div>
+
+  <div id="chat">
+    <div id="msgs">
+      <div class="msg-wrap bot">
+        <div class="msg-label">Finance AI</div>
+        <div class="msg">👋 Hi! I'm your AI-powered finance helper. Ask me any question about savings, investments, loans, budgets, or financial planning in India!</div>
+      </div>
+    </div>
+    <div class="disclaimer">📌 For educational purposes only — not professional financial advice. Always consult a certified advisor for major decisions.</div>
+    <div id="inputrow">
+      <input id="inp" placeholder="Ask any finance question..." onkeydown="if(event.key==='Enter' && !event.shiftKey) send()"/>
+      <button id="send" onclick="send()">Send ↗</button>
+    </div>
+  </div>
+
+  <div id="calc-panel">
+    <h3>EMI Calculator</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>Loan amount (₹)</label><input type="number" id="loan" value="500000"/></div>
+      <div class="field"><label>Annual interest rate (%)</label><input type="number" id="rate" value="8.5" step="0.1"/></div>
+      <div class="field"><label>Loan tenure (months)</label><input type="number" id="tenure" value="60"/></div>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <button id="calc-btn" onclick="calcEMI()">Calculate EMI</button>
+      </div>
+    </div>
+    <div id="emi-result">
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">Monthly EMI</div><div class="stat-val" id="r-emi">—</div></div>
+        <div class="stat"><div class="stat-label">Total interest</div><div class="stat-val" id="r-int">—</div></div>
+        <div class="stat"><div class="stat-label">Total payment</div><div class="stat-val" id="r-total">—</div></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="status-info" id="status">✅ Connected to server</div>
+</div>
+
+<script>
+  let conversationHistory = [];
+
+  function addMsg(text, type) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap ' + type;
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = type === 'bot' ? 'Finance AI' : 'You';
+    const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.innerHTML = text;
+    wrap.appendChild(label);
+    wrap.appendChild(msg);
+    const msgs = document.getElementById('msgs');
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    return wrap;
+  }
+
+  function addTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg-wrap bot';
+    wrap.id = 'typing-indicator';
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = 'Finance AI';
+    const t = document.createElement('div');
+    t.className = 'typing';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    wrap.appendChild(label);
+    wrap.appendChild(t);
+    const msgs = document.getElementById('msgs');
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+  }
+
+  async function send() {
+    const inp = document.getElementById('inp');
+    const q = inp.value.trim();
+    if (!q) return;
+    inp.value = '';
+    const btn = document.getElementById('send');
+    btn.disabled = true;
+
+    addMsg(q, 'user');
+    addTyping();
+
+    try {
+      conversationHistory.push({ role: 'user', content: q });
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          messages: conversationHistory,
+          userMessage: q 
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+      
+      const reply = data.reply;
+      conversationHistory.push({ role: 'assistant', content: reply });
+      
+      removeTyping();
+      addMsg(reply.replace(/\n/g, '<br>'), 'bot');
+    } catch (error) {
+      removeTyping();
+      addMsg('⚠ Error: ' + error.message + '. Make sure the server is running and API key is set.', 'bot');
+    } finally {
+      btn.disabled = false;
+      inp.focus();
+    }
+  }
+
+  function ask(q) {
+    document.getElementById('inp').value = q;
+    send();
+  }
+
+  function toggleCalc() {
+    const p = document.getElementById('calc-panel');
+    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+  }
+
+  function fmt(n) {
+    return '₹' + Math.round(n).toLocaleString('en-IN');
+  }
+
+  function calcEMI() {
+    const P = parseFloat(document.getElementById('loan').value);
+    const annualRate = parseFloat(document.getElementById('rate').value);
+    const n = parseInt(document.getElementById('tenure').value);
+    if (!P || !annualRate || !n) return;
+    const r = annualRate / 12 / 100;
+    const emi = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    const total = emi * n;
+    const interest = total - P;
+    document.getElementById('r-emi').textContent = fmt(emi);
+    document.getElementById('r-int').textContent = fmt(interest);
+    document.getElementById('r-total').textContent = fmt(total);
+    document.getElementById('emi-result').style.display = 'block';
+  }
+</script>
+</body>
+</html>
